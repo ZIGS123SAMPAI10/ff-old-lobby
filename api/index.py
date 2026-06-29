@@ -56,4 +56,3 @@ def catch_all(path):
         return "OK", 200
 
 app = app
-           
