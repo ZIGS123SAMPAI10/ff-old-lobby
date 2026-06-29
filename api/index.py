@@ -14,14 +14,22 @@ MY_URL = "https://ffold1lb123.vercel.app"
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'] )
 @app.route('/<path:path>', methods=['GET', 'POST'])
 def catch_all(path):
-    # --- LOGGING UNTUK DEBUG ---
-    print(f"[*] Akses Jalur: /{path} | Method: {request.method}")
+    # --- LOGGING DETAIL (Cek di Dashboard Vercel > Logs) ---
+    print(f"[*] Game Akses Jalur: /{path}")
     
     # 1. HANDLING CEK VERSI (/live/ver.php)
+    # Format ini adalah format standar PHP Garena tahun 2018
     if "ver.php" in path or "version" in path.lower():
-        # Kita coba format 'Legacy' yang paling ampuh buat FF 2018
-        # Format: [Versi]|[Update_Flag]|[URL_Update]
-        return Response("1.25.0|0|none", mimetype="text/plain")
+        # Baris 1: Versi Game
+        # Baris 2: Flag Update (0 = Tidak ada update)
+        # Baris 3: Link Update (none = Tidak ada link)
+        response_text = "1.25.0\n0\nnone"
+        
+        return Response(
+            response_text, 
+            mimetype="text/plain",
+            headers={'Content-Type': 'text/plain; charset=utf-8'}
+        )
 
     # 2. HANDLING LOGIN & LOBBY (POST)
     if request.method == 'POST':
@@ -34,6 +42,7 @@ def catch_all(path):
             res.token = "GUEST_SUCCESS_FINAL"
             res.serverUrl = MY_URL
             
+            # Kita kirim data murni Protobuf (Seringkali FF 2018 lebih suka ini via HTTP)
             return Response(
                 res.SerializeToString(), 
                 mimetype="application/x-protobuf",
