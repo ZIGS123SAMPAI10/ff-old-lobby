@@ -18,37 +18,34 @@ def catch_all(path):
     if request.method == 'GET':
         return "Server Online! 🗿"
     
-    # LOG: Liat di Vercel Dashboard > Logs
     print(f"[*] Game Akses Jalur: /{path}")
 
+    # --- HANDLING CEK VERSI (Biar gak Koneksi Error) ---
+    if "ver.php" in path or "version" in path.lower():
+        # Kita kasih jawaban teks biasa yang disukai FF Old buat cek versi
+        # Biasanya formatnya: Version: [versi_terbaru]
+        return "Version: 1.25.0\nUpdate: 0\nStatus: OK"
+
     try:
-        # 1. Bikin data respons login
+        # --- HANDLING LOGIN ---
         res = MajorLogin_pb2.response()
         res.accountId = 12345678
         res.lockRegion = "ID"
         res.notiRegion = "ID"
         res.ipRegion = "ID"
-        res.token = "GUEST_SUCCESS_FIX"
+        res.token = "SESSION_FIXED_FINAL"
         res.serverUrl = MY_URL
-        res.ttl = 3600 # Tambahin waktu expired token
         
-        # 2. Serialisasi jadi binary
         protobuf_data = res.SerializeToString()
         
-        # --- TRIK RAHASIA FF 2018 ---
-        # Tambahin 4 byte di depan yang isinya panjang data (Big Endian)
-        # Beberapa versi FF Old butuh ini biar gak 'Connection Error'
+        # Tambahin 4 byte panjang data (khusus buat login)
         length_prefix = struct.pack('>I', len(protobuf_data))
         final_data = length_prefix + protobuf_data
-        # ----------------------------
 
         return Response(
             final_data, 
             mimetype='application/x-protobuf',
-            headers={
-                'Content-Type': 'application/x-protobuf',
-                'Server': 'Garena' # Pura-pura jadi server Garena
-            }
+            headers={'Content-Type': 'application/x-protobuf'}
         )
 
     except Exception as e:
@@ -56,3 +53,4 @@ def catch_all(path):
         return "OK", 200
 
 app = app
+        
