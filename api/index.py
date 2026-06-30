@@ -1,7 +1,6 @@
 from flask import Flask, request, Response
 import sys
 import os
-import json
 
 # Biar Vercel nemu file proto
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -22,19 +21,15 @@ def catch_all(path):
     # Ambil angka versi dari game (1.26.3)
     req_version = request.args.get('version', '1.26.3')
     
-    # LOG buat kita pantau di Vercel
+    # LOG buat kita pantau
     print(f"[*] Akses: /{path} | Versi: {req_version}")
 
-    # 1. HANDLING CEK VERSI (Kunci biar gak Download Gagal)
+    # 1. HANDLING CEK VERSI (Biar gak Download Gagal)
     if "ver.php" in path or "version" in path.lower():
-        # Format ini paling standar buat FF Old:
-        # Baris 1: Versi yang sama dengan game (biar gak update)
-        # Baris 2: Angka 0 (artinya tidak ada update)
-        # Baris 3: Kosong (biar gak nyari link download)
-        response_text = f"{req_version}\n0\n"
-        
+        # KUNCI: Kembalikan HANYA angka versi tanpa spasi atau baris baru (\n)
+        # Ini format paling murni yang diminta FF 1.26.x
         return Response(
-            response_text, 
+            req_version, 
             mimetype='text/plain',
             headers={'Content-Type': 'text/plain; charset=utf-8'}
         )
@@ -50,6 +45,7 @@ def catch_all(path):
             res.token = "GUEST_SUCCESS_FINAL"
             res.serverUrl = MY_URL
             
+            # Kirim data murni Protobuf
             return Response(
                 res.SerializeToString(), 
                 mimetype='application/x-protobuf',
@@ -59,7 +55,6 @@ def catch_all(path):
             print(f"Error Login: {e}")
             return "OK", 200
 
-    # 3. Respon buat Browser
-    return f"Server Online! (Target Versi: {req_version}) 🗿"
+    return f"Server Online! 🗿"
 
 app = app
