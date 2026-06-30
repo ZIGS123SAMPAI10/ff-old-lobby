@@ -23,7 +23,7 @@ def catch_all(path):
         # Baris 1: Versi Game
         # Baris 2: Flag Update (0 = Tidak ada update)
         # Baris 3: Link Update (none = Tidak ada link)
-        response_text = "1.25.3\n0\nnone"
+        response_text = "1.26.3\n0\nnone"
         
         return Response(
             response_text, 
