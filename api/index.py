@@ -18,11 +18,10 @@ MY_URL = "https://private89veffold1lb123.vercel.app"
 def catch_all(path):
     print(f"[*] Akses: /{path}")
 
-    # 1. HANDLING CEK VERSI (Format paling stabil untuk FF 1.26.3)
+    # 1. HANDLING CEK VERSI (Format Minimalis yang tadi sempat berhasil)
     if "ver.php" in path or "version" in path.lower():
-        # Pakai format yang sangat sederhana tanpa spasi
-        # Kita paksa versinya ke 1.26.3
-        response_text = "version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg="
+        # Cuma angka versi saja
+        response_text = "1.26.3"
         
         return Response(
             response_text, 
