@@ -5,34 +5,16 @@ app = Flask(__name__)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # Log biar kita tau game lagi ngapain
-    print(f"Akses: {path} | Versi: {request.args.get('version')}")
+    # Log ini penting! Cek di Vercel/Termux kamu setelah buka game
+    print(f"Game minta file: {path}")
 
-    if "ver.php" in path:
-        # FORMAT SAKTI GARENA 2018 (Urutan sangat penting!)
-        # Kita pakai 1.26.3 sesuai permintaan di log kamu
-        res_body = (
-            "version=1.26.3\n"
-            "update=0\n"
-            "force_update=0\n"
-            "download_url=\n"
-            "msg="
-        )
-        
-        return Response(
-            res_body,
-            mimetype="text/plain",
-            headers={
-                "Content-Type": "text/plain; charset=utf-8",
-                "Server": "Garena"
-            }
-        )
+    # 1. Respon Versi (Wajib cuma angka biar gak Download Gagal)
+    if "ver" in path:
+        return Response("1.26.3", mimetype="text/plain")
 
-    # Respon Login (Biar gak stuck)
-    if request.method == "POST":
-        return "OK"
-
-    return "Server FF 1.26.3 Ready! 🗿"
+    # 2. Respon untuk file lain (notice, msg, login, dll)
+    # Kita kasih kosong aja biar dia gak nampilin popup informasi
+    return ""
 
 if __name__ == "__main__":
     app.run()
