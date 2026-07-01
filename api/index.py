@@ -5,23 +5,34 @@ app = Flask(__name__)
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # Kita ambil versi yang dikirim game, kalau gak ada kita pake 1.25.3
-    v_game = request.args.get("version", "1.25.3")
-    
-    print(f"Game akses: {path} | Versi Game: {v_game}")
+    # Log biar kita tau game lagi ngapain
+    print(f"Akses: {path} | Versi: {request.args.get('version')}")
 
-    if "ver" in path or "version" in path:
-        # Trik SAKTI: Kita balikin versi yang sama dengan yang diminta game
-        # Jadi game bakal mikir dia sudah versi terbaru (Gak perlu update)
-        # Format: version=... (pake baris baru)
-        res_text = f"version={v_game}\nupdate=0\nforce_update=0\ndownload_url=\nmsg="
+    if "ver.php" in path:
+        # FORMAT SAKTI GARENA 2018 (Urutan sangat penting!)
+        # Kita pakai 1.26.3 sesuai permintaan di log kamu
+        res_body = (
+            "version=1.26.3\n"
+            "update=0\n"
+            "force_update=0\n"
+            "download_url=\n"
+            "msg="
+        )
         
-        return Response(res_text, mimetype="text/plain")
+        return Response(
+            res_body,
+            mimetype="text/plain",
+            headers={
+                "Content-Type": "text/plain; charset=utf-8",
+                "Server": "Garena"
+            }
+        )
 
+    # Respon Login (Biar gak stuck)
     if request.method == "POST":
         return "OK"
 
-    return "Server Sinkron FF Aktif! 🗿"
+    return "Server FF 1.26.3 Ready! 🗿"
 
 if __name__ == "__main__":
     app.run()
