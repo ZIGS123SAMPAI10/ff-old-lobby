@@ -1,55 +1,21 @@
 from flask import Flask, request, Response
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-try:
-    import MajorLogin_pb2
-except ImportError:
-    from . import MajorLogin_pb2
 
 app = Flask(__name__)
 
-# Link Server Kamu
-MY_URL = "https://private89veffold1lb123.vercel.app"
-
-@app.route("/" )
-@app.route("/<path:path>")
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    print(f"[*] Akses: /{path}")
+    # Ini buat cek versi (ver.php)
+    # Kita kasih respon yang paling simpel: cuma angka versinya
+    if "ver" in path or "version" in path:
+        return "1.26.3"
 
-    # 1. HANDLING CEK VERSI (Format Minimalis yang tadi sempat berhasil)
-    if "ver.php" in path or "version" in path.lower():
-        # Cuma angka versi saja
-        response_text = "1.26.3"
-        
-        return Response(
-            response_text, 
-            mimetype="text/plain",
-            headers={
-                "Content-Type": "text/plain; charset=utf-8"
-            }
-        )
-
-    # 2. HANDLING LOGIN (POST)
+    # Ini buat login
     if request.method == "POST":
-        try:
-            res = MajorLogin_pb2.response()
-            res.accountId = 1000001
-            res.lockRegion = "ID"
-            res.notiRegion = "ID"
-            res.ipRegion = "ID"
-            res.token = "GUEST_LOGIN_TOKEN"
-            res.serverUrl = MY_URL
-            
-            return Response(
-                res.SerializeToString(), 
-                mimetype="application/x-protobuf"
-            )
-        except Exception as e:
-            print(f"Error Login: {e}")
-            return "OK", 200
+        # Kita kasih respon sukses sementara biar gak error
+        return "OK"
 
-    return f"Server Online! 🗿"
+    return "Server FF Old Online! 🗿"
 
-app = app
+if __name__ == "__main__":
+    app.run(debug=True)
