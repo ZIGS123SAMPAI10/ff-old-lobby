@@ -16,22 +16,13 @@ MY_URL = "https://private89veffold1lb123.vercel.app"
 @app.route("/" )
 @app.route("/<path:path>")
 def catch_all(path):
-    # Ambil versi dari game (1.26.3)
-    req_version = request.args.get("version", "1.26.3")
-    
-    print(f"[*] Akses: /{path} | Versi: {req_version}")
+    print(f"[*] Akses: /{path}")
 
-    # 1. HANDLING CEK VERSI (Kunci biar gak Download Gagal)
+    # 1. HANDLING CEK VERSI (Format paling stabil untuk FF 1.26.3)
     if "ver.php" in path or "version" in path.lower():
-        # Format "Garena Standard" - Pakai pemisah baris \n
-        # msg= kosong supaya tidak muncul popup informasi yang mengganggu
-        response_text = (
-            f"version={req_version}\n"
-            "update=0\n"
-            "force_update=0\n"
-            "download_url=\n"
-            "msg="
-        )
+        # Pakai format yang sangat sederhana tanpa spasi
+        # Kita paksa versinya ke 1.26.3
+        response_text = "version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg="
         
         return Response(
             response_text, 
