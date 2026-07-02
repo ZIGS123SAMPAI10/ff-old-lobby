@@ -11,22 +11,29 @@ def index():
 def version_check():
     client_version = request.args.get("version", "1.26.3")
     
-    # Kita ubah format variabelnya pake HURUF BESAR SEMUA (All Caps)
-    # Ini format standar parser C++ engine game lawas biar ga gagal baca!
+    # 1. Kita susun array string-nya
     lines = [
-        f"VERSION={client_version}",
-        "UPDATE=0",
-        "FORCE=0",
-        "URL=https://private89veffold1lb123.vercel.app",
-        "MSG=",
-        "MD5=00000000000000000000000000000000",
-        "SIZE=0"
+        f"version={client_version}",
+        "update=0",
+        "force_update=0",
+        "download_url=https://private89veffold1lb123.vercel.app",
+        "msg=",
+        "md5=00000000000000000000000000000000",
+        "size=0"
     ]
     
-    res_body = "\r\n".join(lines) + "\r\n"
+    # 2. Paksa encode ke bytes murni biner dengan separator \r\n (CRLF) 
+    # Biar ga dirusak atau diubah sama sistem server Linux-nya Vercel!
+    raw_content = b"\r\n".join([line.encode('utf-8') for line in lines]) + b"\r\n"
     
-    response = Response(res_body, mimetype="text/plain")
+    # 3. Buat response murni
+    response = Response(raw_content, mimetype="text/plain")
+    
+    # 4. Suntik header sakral: Content-Length wajib dihitung manual biar game tau ukuran aslinya!
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    response.headers["Content-Length"] = str(len(raw_content))
+    response.headers["Connection"] = "close"
+    
     return response
 
 @app.route("/<path:path>", methods=["GET", "POST"])
