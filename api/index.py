@@ -9,24 +9,22 @@ def index():
 @app.route("/live/ver.php", methods=["GET", "POST"])
 @app.route("/ver.php", methods=["GET", "POST"])
 def version_check():
-    # Mengambil versi langsung dari request game secara dinamis (biar sinkron 100%)
     client_version = request.args.get("version", "1.26.3")
     
-    # Format text murni Garena lawas. Gunakan join biar ga ada whitespace/spasi gaib dari Python
+    # Kita ubah format variabelnya pake HURUF BESAR SEMUA (All Caps)
+    # Ini format standar parser C++ engine game lawas biar ga gagal baca!
     lines = [
-        f"version={client_version}",
-        "update=0",
-        "force_update=0",
-        "download_url=https://private89veffold1lb123.vercel.app",
-        "msg=",
-        "md5=00000000000000000000000000000000",
-        "size=0"
+        f"VERSION={client_version}",
+        "UPDATE=0",
+        "FORCE=0",
+        "URL=https://private89veffold1lb123.vercel.app",
+        "MSG=",
+        "MD5=00000000000000000000000000000000",
+        "SIZE=0"
     ]
     
-    # Gabungkan dengan \r\n di setiap baris, DAN pastikan ada \r\n di akhir baris paling bawah!
     res_body = "\r\n".join(lines) + "\r\n"
     
-    # Buat response murni text/plain tanpa embel-embel HTML
     response = Response(res_body, mimetype="text/plain")
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     return response
