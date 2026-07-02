@@ -9,27 +9,28 @@ def index():
 @app.route("/live/ver.php", methods=["GET", "POST"])
 @app.route("/ver.php", methods=["GET", "POST"])
 def version_check():
-    # Kunci mati di versi kulit luar (1.25.3) biar logika engine Unity
-    # ngerasa sinkron sama base APK dan gak nuntut download patch data lagi!
+    # Format baris teks sakral engine Unity lawas.
+    # Kita balikin versi sesuai request game lu tadi (1.26.3) 
+    # dengan parameter update dimatikan total.
     lines = [
-        "version=1.25.3",
+        "version=1.26.3",
         "update=0",
         "force_update=0",
-        "download_url=https://private89veffold1lb123.vercel.app",
+        "download_url=",
         "msg=",
-        "md5=00000000000000000000000000000000",
+        "md5=",
         "size=0"
     ]
     
-    # Paksa gabungkan pakai biner bytes \r\n biar ga dirusak sistem Linux Vercel
+    # Gabungkan dengan biner enter Windows (\r\n) biar ga dirusak server Linux
     raw_content = b"\r\n".join([line.encode('utf-8') for line in lines]) + b"\r\n"
     
     response = Response(raw_content, mimetype="text/plain")
     
-    # Header proteksi bypass parser biner game lawas
+    # Kirim header standar murni
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     response.headers["Content-Length"] = str(len(raw_content))
-    response.headers["Connection"] = "close"
+    response.headers["Connection"] = "keep-alive"
     
     return response
 
