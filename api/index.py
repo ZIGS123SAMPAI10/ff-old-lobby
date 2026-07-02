@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, Response
 
 app = Flask(__name__)
 
@@ -9,11 +9,10 @@ def index():
 @app.route("/live/ver.php", methods=["GET", "POST"])
 @app.route("/ver.php", methods=["GET", "POST"])
 def version_check():
-    client_version = request.args.get("version", "1.26.3")
-    
-    # 1. Kita susun array string-nya
+    # Kunci mati di versi kulit luar (1.25.3) biar logika engine Unity
+    # ngerasa sinkron sama base APK dan gak nuntut download patch data lagi!
     lines = [
-        f"version={client_version}",
+        "version=1.25.3",
         "update=0",
         "force_update=0",
         "download_url=https://private89veffold1lb123.vercel.app",
@@ -22,14 +21,12 @@ def version_check():
         "size=0"
     ]
     
-    # 2. Paksa encode ke bytes murni biner dengan separator \r\n (CRLF) 
-    # Biar ga dirusak atau diubah sama sistem server Linux-nya Vercel!
+    # Paksa gabungkan pakai biner bytes \r\n biar ga dirusak sistem Linux Vercel
     raw_content = b"\r\n".join([line.encode('utf-8') for line in lines]) + b"\r\n"
     
-    # 3. Buat response murni
     response = Response(raw_content, mimetype="text/plain")
     
-    # 4. Suntik header sakral: Content-Length wajib dihitung manual biar game tau ukuran aslinya!
+    # Header proteksi bypass parser biner game lawas
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
     response.headers["Content-Length"] = str(len(raw_content))
     response.headers["Connection"] = "close"
