@@ -2,6 +2,14 @@ from flask import Flask, Response
 
 app = Flask(__name__)
 
+# Fungsi XOR Cipher standar Garena Lawas
+def garena_xor_encrypt(data_string, key="garena"):
+    encrypted = bytearray()
+    for i in range(len(data_string)):
+        # Setiap karakter teks di-XOR dengan karakter kunci secara berulang
+        encrypted.append(ord(data_string[i]) ^ ord(key[i % len(key)]))
+    return bytes(encrypted)
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     return "SERVER WINTERLAND 2018 LIVE JAYA"
@@ -9,28 +17,30 @@ def index():
 @app.route("/live/ver.php", methods=["GET", "POST"])
 @app.route("/ver.php", methods=["GET", "POST"])
 def version_check():
-    # Format baris teks sakral engine Unity lawas.
-    # Kita balikin versi sesuai request game lu tadi (1.26.3) 
-    # dengan parameter update dimatikan total.
+    # 1. Buat teks respon mentah dengan format enter Windows (\r\n)
     lines = [
         "version=1.26.3",
+        "patch_version=1.26.3",
         "update=0",
         "force_update=0",
         "download_url=",
-        "msg=",
         "md5=",
-        "size=0"
+        "size=0",
+        "msg="
     ]
+    raw_text = "\r\n".join(lines) + "\r\n"
     
-    # Gabungkan dengan biner enter Windows (\r\n) biar ga dirusak server Linux
-    raw_content = b"\r\n".join([line.encode('utf-8') for line in lines]) + b"\r\n"
+    # 2. Enkripsi teksnya secara real-time pake kunci "garena"
+    encrypted_bytes = garena_xor_encrypt(raw_text, key="garena")
     
-    response = Response(raw_content, mimetype="text/plain")
+    # 3. Kirim data enkripsi mentah ke game FF
+    response = Response(encrypted_bytes, mimetype="text/plain")
     
-    # Kirim header standar murni
+    # Header steril wajib biar ga dirusak proxy Vercel
     response.headers["Content-Type"] = "text/plain; charset=utf-8"
-    response.headers["Content-Length"] = str(len(raw_content))
+    response.headers["Content-Length"] = str(len(encrypted_bytes))
     response.headers["Connection"] = "keep-alive"
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     
     return response
 
@@ -42,3 +52,4 @@ def catch_all(path):
 
 if __name__ == "__main__":
     app.run()
+    
