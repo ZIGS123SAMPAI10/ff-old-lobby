@@ -1,39 +1,56 @@
-from flask import Flask, Response
+from flask import Flask, request, Response
+import sys
+import os
+
+# Import Protobuf yang sudah kamu buat
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+try:
+    import MajorLogin_pb2
+except ImportError:
+    from . import MajorLogin_pb2
 
 app = Flask(__name__)
 
-@app.route("/", defaults={"path": ""})
+# URL Vercel kamu
+MY_URL = "https://private89veffold1lb123.vercel.app"
+
+@app.route("/", defaults={"path": ""} )
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # Format Garena Asli 2018 - Tanpa Spasi, Pake \r\n
+    print(f"Game Request: {path}")
+
+    # KUNCI UTAMA: ver.php harus jawab pake Protobuf!
     if "ver.php" in path:
-        # Kita susun stringnya dengan sangat hati-hati
-        lines = [
-            "version=1.26.3",
-            "update=0",
-            "force_update=0",
-            "download_url=",
-            "msg=",
-            "" # Baris kosong di akhir seringkali wajib ada
-        ]
-        res_body = "\r\n".join(lines)
+        res = MajorLogin_pb2.response()
+        res.accountId = 1001
+        res.token = "GUEST_LOGIN_TOKEN"
+        res.serverUrl = MY_URL # Kasih tau game harus login ke mana
+        res.ipRegion = "ID"
+        res.notiRegion = "ID"
+        res.lockRegion = "ID"
+        
+        # Serialize data ke binary
+        protobuf_data = res.SerializeToString()
         
         return Response(
-            res_body,
-            status=200,
-            mimetype="text/plain",
+            protobuf_data,
+            mimetype="application/x-protobuf",
             headers={
-                "Content-Type": "text/plain; charset=utf-8",
-                "Connection": "keep-alive"
+                "Content-Type": "application/x-protobuf",
+                "Server": "Garena"
             }
         )
 
-    # Untuk Login (POST)
+    # Respon untuk Login (POST)
     if request.method == "POST":
-        return "OK"
+        res = MajorLogin_pb2.response()
+        res.accountId = 1001
+        res.token = "GUEST_SUCCESS"
+        res.serverUrl = MY_URL
+        return Response(res.SerializeToString(), mimetype="application/x-protobuf")
 
-    return "Server Garena Winterlands 1.26.3 Online! 🗿"
+    return "Server Protobuf FF 1.26.3 Aktif! 🗿"
 
 if __name__ == "__main__":
     app.run()
-    
+        
