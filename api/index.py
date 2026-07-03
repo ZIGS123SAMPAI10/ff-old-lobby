@@ -11,46 +11,57 @@ except ImportError:
 
 app = Flask(__name__)
 
-# URL Vercel kamu (Pastikan ini yang kamu pasang di APK)
-MY_URL = "https://private89veffold1lb123.vercel.app"
+# URL Vercel tanpa 'https://' dan dipaksa tembak port HTTPS (443)
+# Ini format krusial biar APK gak parsing eror dan balik ke IP Garena asli
+MY_GAME_SERVER = "private89veffold1lb123.vercel.app:443"
 
-@app.route("/", defaults={"path": ""}, methods=["GET", "POST"] )
+@app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # 1. HANDLING VER.PHP (Protokol Asli Garena 2018)
-    if "ver.php" in path:
-        # Garena asli pake format ini buat bilang 'Gak ada Update'
+    path_lower = path.lower()
+
+    # 1. HANDLING VER.PHP (Pengecekan Versi / Update Game)
+    if "ver.php" in path_lower or "version" in path_lower:
         res_text = "version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg="
         return Response(res_text, mimetype="text/plain")
 
-    # 2. HANDLING LOGIN (Protokol Protobuf Asli Garena)
-    # Setelah ver.php sukses, game bakal POST data login ke server
-    if request.method == "POST":
+    # 2. HANDLING LOGIN PROTOBUF
+    # Kita filter biar bener-bener merespon pas APK minta endpoint login (misal /login, /login_server, dll)
+    if request.method == "POST" and ("login" in path_lower or "auth" in path_lower):
         try:
-            # Kita buat jawaban Protobuf yang 100% cocok sama MajorLogin.proto
+            # Buat instance response sesuai file proto lu
             res = MajorLogin_pb2.response()
             res.accountId = 1000001
             res.token = "GUEST_LOGIN_SUCCESS_2018"
-            res.serverUrl = MY_URL # Game harus tau dia konek ke mana selanjutnya
+            
+            # PAKSA GAME UNTUK TETEP DI VERCEL VIA PORT 443
+            res.serverUrl = MY_GAME_SERVER 
+            
             res.ipRegion = "ID"
             res.notiRegion = "ID"
             res.lockRegion = "ID"
-            res.ttl = 86400 # Token berlaku 24 jam
-            
-            # Garena asli biasanya minta region rekomendasi
+            res.ttl = 86400  # Token aktif 24 jam
             res.recommendRegions.append("ID")
             
             return Response(
                 res.SerializeToString(),
                 mimetype="application/x-protobuf",
-                headers={"Content-Type": "application/x-protobuf"}
+                headers={
+                    "Content-Type": "application/x-protobuf",
+                    "Cache-Control": "no-cache"
+                }
             )
         except Exception as e:
-            # Kalau ada error, kita tetep jawab biar gak plonga-plongo
-            return "OK", 200
+            # Jika ada error internal protobuf, balikkan status 500 biar gampang di-debug di log Vercel
+            return f"Error Protobuf: {str(e)}", 500
 
-    # 3. HANDLING LAINNYA (Notice, dll)
+    # 3. HANDLING MAINTENANCE / NOTICE / CONFIG LAINNYA
+    # Kalau game nyari file json, txt, atau konfigurasi lain, kasih respon kosong/OK 
+    # biar game gak mandek (stuck) plonga-plongo nungguin server.
+    if request.method == "POST":
+        return "OK", 200
+        
     return ""
 
-# Objek app untuk Vercel
+# Objek app untuk dibaca oleh serverless Vercel
 app = app
