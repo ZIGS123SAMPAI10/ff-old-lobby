@@ -1,8 +1,9 @@
 from flask import Flask, request, Response
 import sys
 import os
+import binascii
 
-# Import Protobuf
+# Setup path agar bisa baca MajorLogin_pb2
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
     import MajorLogin_pb2
@@ -11,43 +12,41 @@ except ImportError:
 
 app = Flask(__name__)
 
-# URL Vercel kamu (Tanpa spasi, pastikan benar)
-MY_URL = "https://private89veffold1lb123.vercel.app"
-
-@app.route("/", defaults={"path": ""} )
+@app.route("/", defaults={"path": ""})
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    print(f"[*] Request Masuk: {path}")
+    # Ambil data biner mentah dari request
+    raw_data = request.get_data()
+    
+    print(f"\n--- [DEBUG] REQUEST MASUK ---")
+    print(f"Path: {path}")
+    print(f"Method: {request.method}")
+    
+    if raw_data:
+        # 1. Print Payload dalam format HEX (Biar bisa dibandingin sama SS)
+        hex_payload = binascii.hexlify(raw_data).decode('utf-8')
+        print(f"Raw Hex: {hex_payload}")
+        
+        # 2. Coba Decode pake Protobuf MajorLogin
+        try:
+            # Kita coba pake 'request' message dari proto kamu
+            req_msg = MajorLogin_pb2.request()
+            req_msg.ParseFromString(raw_data)
+            print(f"HASIL DECODE PROTOBUF:\n{req_msg}")
+        except Exception as e:
+            print(f"Gagal decode Protobuf: {e}")
+            print("Mungkin data dienkripsi atau formatnya bukan MajorLogin.request")
+    else:
+        print("Tidak ada payload biner (Request Kosong)")
+    
+    print(f"-----------------------------\n")
 
-    # 1. HANDLING VER.PHP DENGAN PROTOBUF LENGKAP
+    # Tetap kasih respon ver.php supaya game gak langsung mati
     if "ver.php" in path:
-        res = MajorLogin_pb2.response()
-        res.accountId = 0 # 0 biasanya untuk pengecekan awal
-        res.token = "GUEST_TOKEN_REV"
-        res.serverUrl = MY_URL
-        res.ipRegion = "ID"
-        res.notiRegion = "ID"
-        res.lockRegion = "ID"
-        res.ttl = 86400 # Kita kasih waktu 24 jam biar gak timeout/loading lama
-        
-        # Tambahkan region rekomendasi (biar RX datanya lebih besar mirip screenshot kamu)
-        res.recommendRegions.append("ID")
-        res.recommendRegions.append("US")
-        
-        return Response(
-            res.SerializeToString(),
-            mimetype="application/x-protobuf"
-        )
+        # Kita kasih respon dummy sementara
+        return "1.26.3"
 
-    # 2. HANDLING LOGIN (POST)
-    if request.method == "POST":
-        res = MajorLogin_pb2.response()
-        res.accountId = 12345678
-        res.token = "LOGIN_SUCCESS_PROJECT_REVENGER"
-        res.serverUrl = MY_URL
-        return Response(res.SerializeToString(), mimetype="application/x-protobuf")
-
-    return "Server Project Revenger 1.26.3 Online! 🗿"
+    return "Logger Active! 🗿", 200
 
 if __name__ == "__main__":
     app.run()
