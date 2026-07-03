@@ -2,7 +2,7 @@ from flask import Flask, request, Response
 import sys
 import os
 
-# Setup path agar bisa baca MajorLogin_pb2
+# Import Protobuf asli Garena yang kamu punya
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 try:
     import MajorLogin_pb2
@@ -11,51 +11,46 @@ except ImportError:
 
 app = Flask(__name__)
 
-# URL Vercel kamu
+# URL Vercel kamu (Pastikan ini yang kamu pasang di APK)
 MY_URL = "https://private89veffold1lb123.vercel.app"
 
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"] )
 @app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # Log setiap request yang masuk (Penting!)
-    print(f"[*] Request: {request.method} /{path}")
+    # 1. HANDLING VER.PHP (Protokol Asli Garena 2018)
+    if "ver.php" in path:
+        # Garena asli pake format ini buat bilang 'Gak ada Update'
+        res_text = "version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg="
+        return Response(res_text, mimetype="text/plain")
 
-    # 1. HANDLING LOGIN (POST Request)
-    # Ini adalah tahap setelah ver.php sukses
+    # 2. HANDLING LOGIN (Protokol Protobuf Asli Garena)
+    # Setelah ver.php sukses, game bakal POST data login ke server
     if request.method == "POST":
-        print(f"[*] Mendeteksi POST payload sebesar {len(request.get_data())} bytes")
         try:
-            # Kita buat respon Protobuf yang bikin game 'senang'
+            # Kita buat jawaban Protobuf yang 100% cocok sama MajorLogin.proto
             res = MajorLogin_pb2.response()
-            res.accountId = 12345678  # ID Akun Dummy
-            res.token = "GUEST_SUCCESS_PROJECT_REVENGER"
-            res.serverUrl = MY_URL    # Arahkan game tetap ke server kita
+            res.accountId = 1000001
+            res.token = "GUEST_LOGIN_SUCCESS_2018"
+            res.serverUrl = MY_URL # Game harus tau dia konek ke mana selanjutnya
             res.ipRegion = "ID"
             res.notiRegion = "ID"
             res.lockRegion = "ID"
-            res.ttl = 86400           # Token berlaku 24 jam
+            res.ttl = 86400 # Token berlaku 24 jam
             
-            # Tambahkan rekomendasi region agar data lebih lengkap
+            # Garena asli biasanya minta region rekomendasi
             res.recommendRegions.append("ID")
             
-            # Kirim balik dalam format Binary Protobuf
             return Response(
                 res.SerializeToString(),
                 mimetype="application/x-protobuf",
-                headers={
-                    "Content-Type": "application/x-protobuf",
-                    "Server": "Garena"
-                }
+                headers={"Content-Type": "application/x-protobuf"}
             )
         except Exception as e:
-            print(f"[!] Gagal membuat respon Protobuf: {e}")
+            # Kalau ada error, kita tetep jawab biar gak plonga-plongo
             return "OK", 200
 
-    # 2. HANDLING VER.PHP (Tetap kita jaga)
-    if "ver.php" in path:
-        return "1.26.3"
+    # 3. HANDLING LAINNYA (Notice, dll)
+    return ""
 
-    return "Server Project Revenger: Pintu Login Terbuka! 🗿", 200
-
-# Vercel butuh objek 'app'
+# Objek app untuk Vercel
 app = app
