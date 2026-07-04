@@ -1,2 +1,3 @@
 flask
 protobuf
+flask-sock==0.7.0
