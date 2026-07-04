@@ -21,7 +21,7 @@ def catch_all(path):
     if "ver.php" in path_lower or "version" in path_lower:
         return Response("version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg=", mimetype="text/plain")
 
-    # 2. LOGIN PROTOBUF - KITA TELANJANGI TANPA HEADER WEB SAMA SEKALI
+    # 2. LOGIN PROTOBUF - PAKAI FORMAT TRANSFER RAW YANG SAH DI VERCEL
     if request.method == "POST" and ("login" in path_lower or "auth" in path_lower or "client" in path_lower):
         try:
             res = MajorLogin_pb2.response()
@@ -36,29 +36,35 @@ def catch_all(path):
             
             binary_data = res.SerializeToString()
             
-            # Trik Sakral: Kirim murni data binernya saja, matikan proteksi encoding web
-            response = Response(binary_data, status=200, mimetype="application/octet-stream")
-            response.headers.clear() # Hapus paksa semua header standard web bawaan Flask
-            response.headers["Content-Type"] = "application/octet-stream"
-            response.headers["Content-Length"] = str(len(binary_data))
-            return response
+            # Jangan di-clear headernya, tapi kasih standarisasi biner murni
+            return Response(
+                binary_data,
+                status=200,
+                headers={
+                    "Content-Type": "application/octet-stream",
+                    "Content-Length": str(len(binary_data)),
+                    "Connection": "keep-alive"
+                }
+            )
             
         except Exception as e:
             return str(e), 500
 
-    # 3. PENAMPUNG TRAFFIC LANJUTAN (ECHO STREAM)
+    # 3. PENAMPUNG TRAFFIC LANJUTAN
     if request.method == "POST":
         raw_payload = request.data
         if raw_payload:
-            response = Response(raw_payload, status=200, mimetype="application/octet-stream")
-            response.headers.clear()
-            response.headers["Content-Type"] = "application/octet-stream"
-            response.headers["Content-Length"] = str(len(raw_payload))
-            return response
-
-        return Response("", status=200)
+            return Response(
+                raw_payload,
+                status=200,
+                headers={
+                    "Content-Type": "application/octet-stream",
+                    "Content-Length": str(len(raw_payload)),
+                    "Connection": "keep-alive"
+                }
+            )
+        return Response("{}", mimetype="application/json", status=200)
 
     return "Ready", 200
 
 app = app
-            
