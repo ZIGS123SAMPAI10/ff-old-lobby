@@ -21,7 +21,7 @@ def catch_all(path):
     if "ver.php" in path_lower or "version" in path_lower:
         return Response("version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg=", mimetype="text/plain")
 
-    # 2. LOGIN PROTOBUF 
+    # 2. LOGIN PROTOBUF - KITA TELANJANGI TANPA HEADER WEB SAMA SEKALI
     if request.method == "POST" and ("login" in path_lower or "auth" in path_lower or "client" in path_lower):
         try:
             res = MajorLogin_pb2.response()
@@ -34,25 +34,31 @@ def catch_all(path):
             res.ttl = 86400  
             res.recommendRegions.append("ID")
             
-            # Kita bungkus sekecil mungkin tanpa embel-embel header berlebih
-            return Response(
-                res.SerializeToString(),
-                mimetype="application/octet-stream" 
-            )
+            binary_data = res.SerializeToString()
+            
+            # Trik Sakral: Kirim murni data binernya saja, matikan proteksi encoding web
+            response = Response(binary_data, status=200, mimetype="application/octet-stream")
+            response.headers.clear() # Hapus paksa semua header standard web bawaan Flask
+            response.headers["Content-Type"] = "application/octet-stream"
+            response.headers["Content-Length"] = str(len(binary_data))
+            return response
+            
         except Exception as e:
             return str(e), 500
 
-    # 3. PANTULAN BINER TRAFFIC (Agar tidak tersumbat header web)
+    # 3. PENAMPUNG TRAFFIC LANJUTAN (ECHO STREAM)
     if request.method == "POST":
         raw_payload = request.data
         if raw_payload:
-            # Gunakan generator generator murni biar dikirim sebagai raw bytes stream
-            def generate():
-                yield raw_payload
-            return Response(generate(), mimetype="application/octet-stream")
+            response = Response(raw_payload, status=200, mimetype="application/octet-stream")
+            response.headers.clear()
+            response.headers["Content-Type"] = "application/octet-stream"
+            response.headers["Content-Length"] = str(len(raw_payload))
+            return response
 
         return Response("", status=200)
 
     return "Ready", 200
 
 app = app
+            
