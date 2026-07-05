@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 # ALAMAT SERVER LOBBY (TCP) KAMU
 # Ini adalah link yang akan dituju game setelah melewati Gerbang Vercel
-LOBBY_TCP = "g1dw3aegfh.localto.net:5034"
+LOBBY_TCP = "g1dw3aegfh.localto.net:8079"
 
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
