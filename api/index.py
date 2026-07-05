@@ -1,27 +1,37 @@
-from flask import Flask, request, redirect, Response
+from http.server import BaseHTTPRequestHandler
+import json
 
-app = Flask(__name__)
+class handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        # Membaca isi request biner dari APK FF Old lu
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        
+        # Kirim header sukses HTTP 200 OK
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        
+        # JALUR UTAMA: Nembak ke alamat localhost.run Termux lu yang aktif!
+        # Game bakal ngebaca ini sebagai IP/Host tujuan untuk masuk ke Lobby.
+        response_data = {
+            "status": 0,
+            "message": "SUCCESS",
+            "serverUrl": "7c61d239f96d0b.lhr.life",  # Mengarah ke tunnel Termux lu
+            "serverPort": 80,                         # Port standar HTTP localhost.run
+            "accountId": 12345678,
+            "sessionKey": "ZIGS-GAMING-SESSION-TOKEN-2026"
+        }
+        
+        # Kirim balik respon berupa JSON ke APK game FF Old
+        self.wfile.write(json.dumps(response_data).encode('utf-8'))
+        return
 
-# URL PythonAnywhere lu yang baru
-PYTHONANYWHERE_SERVER = "https://privateproject45.pythonanywhere.com"
-
-@app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
-@app.route("/<path:path>", methods=["GET", "POST"])
-def catch_all(path):
-    path_lower = path.lower()
-
-    # 1. Jalur ver.php atau config teks biasa dihandle langsung di Vercel biar cepet
-    if "ver.php" in path_lower or "version" in path_lower:
-        # Ini contoh respon versi bawaan game lu, sesuaikan kalau versinya beda
-        return Response(
-            "version=1.26.3\nupdate=0\nforce_update=0\ndownload_url=\nmsg=", 
-            mimetype="text/plain"
-        )
-
-    # 2. OPER JALUR (Redirect) untuk Login, Auth, atau data biner game ke PythonAnywhere
-    # Menggunakan HTTP 307 supaya Method (POST) dan Body (Biner Protobuf) 
-    # dari game dikirim UTUH tanpa diubah/diacak-acak oleh proxy Vercel.
-    return redirect(f"{PYTHONANYWHERE_SERVER}/{path}", code=307)
-
-# Handler khusus buat Vercel Serverless
-app = app
+    def do_GET(self):
+        # Jalur cadangan kalau APK lu nge-ping via metode GET
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"FF Old Vercel Auth API Gateway is Running, King!")
+        return
+        
