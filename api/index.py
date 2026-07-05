@@ -1,37 +1,62 @@
-from http.server import BaseHTTPRequestHandler
-import json
+from flask import Flask, request, Response
+import sys
+import os
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        # Membaca isi request biner dari APK FF Old lu
-        content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length)
-        
-        # Kirim header sukses HTTP 200 OK
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        
-        # JALUR UTAMA: Nembak ke alamat localhost.run Termux lu yang aktif!
-        # Game bakal ngebaca ini sebagai IP/Host tujuan untuk masuk ke Lobby.
-        response_data = {
-            "status": 0,
-            "message": "SUCCESS",
-            "serverUrl": "7c61d239f96d0b.lhr.life",  # Mengarah ke tunnel Termux lu
-            "serverPort": 80,                         # Port standar HTTP localhost.run
-            "accountId": 12345678,
-            "sessionKey": "ZIGS-GAMING-SESSION-TOKEN-2026"
-        }
-        
-        # Kirim balik respon berupa JSON ke APK game FF Old
-        self.wfile.write(json.dumps(response_data).encode('utf-8'))
-        return
+# Setup path agar bisa baca MajorLogin_pb2
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+try:
+    import MajorLogin_pb2
+except ImportError:
+    from . import MajorLogin_pb2
 
-    def do_GET(self):
-        # Jalur cadangan kalau APK lu nge-ping via metode GET
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b"FF Old Vercel Auth API Gateway is Running, King!")
-        return
-        
+app = Flask(__name__)
+
+# ALAMAT SERVER LOBBY (TCP) KAMU
+# Ini adalah link yang akan dituju game setelah melewati Gerbang Vercel
+LOBBY_TCP = "g1dw3aegfh.localto.net:5034"
+
+@app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
+@app.route("/<path:path>", methods=["GET", "POST"])
+def catch_all(path):
+    # 1. GERBANG UTAMA: ver.php
+    # Tugasnya: Mastiin game gak 'Download Gagal'
+    if "ver.php" in path:
+        # Kita pake respon paling simpel yang tadi sempat berhasil lolos
+        return Response("1.26.3", mimetype="text/plain")
+
+    # 2. PROSES PENGARAHAN (Login Phase)
+    # Setelah ver.php sukses, game akan melakukan POST untuk minta data login
+    if request.method == "POST":
+        try:
+            # Kita buat respon Protobuf (Tiket Login)
+            res = MajorLogin_pb2.response()
+            res.accountId = 1000001
+            res.token = "GUEST_LOGIN_SUCCESS"
+            
+            # KUNCI UTAMA: Di sini kita arahkan game ke link localto.net kamu
+            # Begitu dapet data ini, game bakal mutusin koneksi HTTPS Vercel 
+            # dan langsung buka koneksi TCP ke g1dw3aegfh.localto.net:5034
+            res.serverUrl = LOBBY_TCP
+            
+            res.ipRegion = "ID"
+            res.notiRegion = "ID"
+            res.lockRegion = "ID"
+            res.ttl = 86400
+            res.recommendRegions.append("ID")
+            
+            return Response(
+                res.SerializeToString(),
+                mimetype="application/x-protobuf",
+                headers={
+                    "Content-Type": "application/x-protobuf",
+                    "Server": "Garena-Gatekeeper"
+                }
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+            return "OK", 200
+
+    return "Gerbang Utama FF Old Vercel Aktif! 🗿", 200
+
+# Objek app untuk Vercel
+app = app
