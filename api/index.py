@@ -1,6 +1,7 @@
 from flask import Flask, request, Response
 import sys
 import os
+import socket
 
 # Setup path agar bisa baca MajorLogin_pb2
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -11,9 +12,24 @@ except ImportError:
 
 app = Flask(__name__)
 
-# ALAMAT SERVER LOBBY (TCP) KAMU
-# IP diubah ke murni angka hasil ping agar game APK jadul gak nyasar/stuck
-LOBBY_TCP = "103.55.38.185:5034"
+# ====================================================================
+# KONFIGURASI SERVER TERMUX KAMU (PAGEKITE)
+# ====================================================================
+PAGEKITE_DOMAIN = "ffkipasold.pagekite.me"
+PAGEKITE_PORT   = 14000
+# ====================================================================
+
+def get_lobby_tcp_address():
+    """Fungsi otomatis mengubah domain Pagekite menjadi IP angka:port"""
+    try:
+        # Mengubah 'ffkipasold.pagekite.me' menjadi IP angka (contoh: 139.162.5.63)
+        ip_angka = socket.gethostbyname(PAGEKITE_DOMAIN)
+        print(f"[SUCCESS] Resolving IP: {ip_angka}:{PAGEKITE_PORT}")
+        return f"{ip_angka}:{PAGEKITE_PORT}"
+    except socket.gaierror:
+        # Jika gagal/Pagekite mati, pakai fallback IP relay cadangan agar script tidak crash
+        print("[WARNING] Gagal resolve domain Pagekite, menggunakan IP fallback.")
+        return f"139.162.5.63:{PAGEKITE_PORT}"
 
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
@@ -28,15 +44,17 @@ def catch_all(path):
     # Setelah ver.php sukses, game akan melakukan POST untuk minta data login
     if request.method == "POST":
         try:
+            # Ambil alamat IP Angka + Port dari Pagekite secara real-time
+            lobby_address_resolved = get_lobby_tcp_address()
+
             # Kita buat respon Protobuf (Tiket Login)
             res = MajorLogin_pb2.response()
             res.accountId = 1000001
             res.token = "GUEST_LOGIN_SUCCESS"
             
-            # KUNCI UTAMA: Di sini kita arahkan game ke IP angka Localtonet kamu
-            # Begitu dapet data ini, game bakal mutusin koneksi HTTPS Vercel 
-            # dan langsung buka koneksi TCP ke 103.55.38.185:5034
-            res.serverUrl = LOBBY_TCP
+            # KUNCI UTAMA: Mengirimkan IP Angka hasil konversi ke APK game
+            # Game akan langsung membuka koneksi TCP ke IP tersebut (Port 14000)
+            res.serverUrl = lobby_address_resolved
             
             res.ipRegion = "ID"
             res.notiRegion = "ID"
