@@ -12,8 +12,8 @@ except ImportError:
 app = Flask(__name__)
 
 # ALAMAT SERVER LOBBY (TCP) KAMU
-# Ini adalah link yang akan dituju game setelah melewati Gerbang Vercel
-LOBBY_TCP = "g1dw3aegfh.localto.net:7943"
+# IP diubah ke murni angka hasil ping agar game APK jadul gak nyasar/stuck
+LOBBY_TCP = "103.55.38.185:5034"
 
 @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
 @app.route("/<path:path>", methods=["GET", "POST"])
@@ -33,9 +33,9 @@ def catch_all(path):
             res.accountId = 1000001
             res.token = "GUEST_LOGIN_SUCCESS"
             
-            # KUNCI UTAMA: Di sini kita arahkan game ke link localto.net kamu
+            # KUNCI UTAMA: Di sini kita arahkan game ke IP angka Localtonet kamu
             # Begitu dapet data ini, game bakal mutusin koneksi HTTPS Vercel 
-            # dan langsung buka koneksi TCP ke g1dw3aegfh.localto.net:5034
+            # dan langsung buka koneksi TCP ke 103.55.38.185:5034
             res.serverUrl = LOBBY_TCP
             
             res.ipRegion = "ID"
@@ -60,3 +60,4 @@ def catch_all(path):
 
 # Objek app untuk Vercel
 app = app
+            
