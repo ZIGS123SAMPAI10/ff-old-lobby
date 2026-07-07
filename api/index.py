@@ -1,29 +1,45 @@
 from flask import Flask, request, Response
-import socket
+import requests
 
 app = Flask(__name__)
 
+# ====================================================================
+# VARIABEL LINK DAN PORT LU TETEP AMAN SAMA KAYA KEMARIN BRE! 🗿
+# ====================================================================
 PAGEKITE_DOMAIN = "ffoldprivatserver.serveo.net"
 PAGEKITE_PORT   = 14000
+# ====================================================================
 
-@app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
-@app.route("/<path:path>", methods=["GET", "POST"])
+@app.route("/", defaults={"path": ""}, methods=["GET", "POST", "PUT", "DELETE"])
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE"])
 def catch_all(path):
+    # Rakit URL lengkap beserta parameter ?version=... bawaan game FF lu secara otomatis
+    url = f"http://{PAGEKITE_DOMAIN}:{PAGEKITE_PORT}/{path}"
+    
+    # Ambil headers bawaan game dan bersihkan biar gak tabrakan di proxy Vercel
+    headers = {key: value for (key, value) in request.headers if key.lower() != 'host'}
+    
     try:
-        ip_angka = socket.gethostbyname("serveo.net")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(6.0)
-        s.connect((ip_angka, PAGEKITE_PORT))
+        # Oper request secara utuh dan sempurna (Query params, data biner, sikat semua!)
+        response_dari_termux = requests.request(
+            method=request.method,
+            url=url,
+            headers=headers,
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False,
+            params=request.query_string.decode('utf-8'), # <--- INI KUNCI BIAR PARAMETER ?VERSION KAGAK ILANG!
+            timeout=8.0
+        )
         
-        raw_headers = f"{request.method} /{path} HTTP/1.1\r\nHost: {PAGEKITE_DOMAIN}\r\n\r\n".encode()
-        raw_body = request.get_data()
+        # Kembalikan jawaban ver.php dari Termux lu utuh ke APK Free Fire
+        return Response(
+            response_dari_termux.content, 
+            status=response_dari_termux.status_code, 
+            headers=response_dari_termux.headers.items()
+        )
         
-        s.sendall(raw_headers + raw_body)
-        response_data = s.recv(8192)
-        s.close()
-        
-        return Response(response_data, status=200)
-    except Exception as e:
-        return f"Gagal ke Termux via Serveo: {e}", 502
+    except requests.exceptions.RequestException as e:
+        return f"Gagal tersambung ke backend Termux via Serveo: {e}", 502
 
 app = app
