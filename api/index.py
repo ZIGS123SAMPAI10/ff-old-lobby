@@ -196,7 +196,7 @@ def ver_php():
     # Gunakan request.url_root untuk mendapatkan base URL.
     base_url = request.url_root.rstrip('/')
     return jsonify({
-        "code": 0, "is_server_open": True, "remote_version": "1.29.0",
+        "code": 0, "is_server_open": True, "remote_version": "1.26.3",
         "cdn_url": f"{base_url}/",
         "server_url": f"{base_url}/",
         "core_url": f"{base_url}/"
