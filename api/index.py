@@ -719,7 +719,7 @@ def main_handler(path):
     else:
         # Jika tidak ada sesi, mungkin game meminta sesuatu yang lain atau belum login
         # Atau bisa juga mengembalikan error atau redirect ke login
-        return "Welcome to Free Fire Private Server! Please login via the game.", 200
+        return "METHOD NOT ALLOWED.", 200
 
 # Inisialisasi database saat aplikasi dimulai
 init_db()
