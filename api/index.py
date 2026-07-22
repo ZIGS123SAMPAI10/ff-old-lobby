@@ -91,7 +91,7 @@ def load_session_from_db():
             return dict(row)
     return {"token": "", "account_id": 0, "username": ""}
 
-# --- MANUAL PROTOBUF BUILDER (FF v1.25.3 COMPATIBLE - ASLI) ---
+# --- MANUAL PROTOBUF BUILDER (FF v1.25.3 COMPATIBLE - ASLI TEMUAN ANDA) ---
 def encode_varint(value):
     out = []
     while value > 127:
@@ -145,6 +145,59 @@ app = Flask(__name__)
 
 # --- KONFIGURASI ---
 TCP_PORT = 5034
+
+# --- HTML PUBLIC STATUS PAGE (TAMBAHAN KHUSUS UTK ADMIN / IS-A.DEV CHECKER) ---
+PUBLIC_HOME_HTML = """
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF Old Server Service</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        h2 { color: #58a6ff; margin-top: 0; font-size: 18px; }
+        .status-badge {
+            background-color: rgba(46, 160, 67, 0.15);
+            color: #3fb950;
+            border: 1px solid rgba(63, 185, 80, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 15px 0;
+        }
+        p { color: #8b949e; font-size: 12px; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🔥 FF Old Server API</h2>
+        <div class="status-badge">● SERVICE ONLINE</div>
+        <p>Game Backend Endpoint Active (v1.25.3)</p>
+    </div>
+</body>
+</html>
+"""
 
 # --- HTML LOGIN PAGE ---
 LOGIN_HTML = """
@@ -220,6 +273,10 @@ def ver_php():
 @app.route("/", defaults={"path": ""}, methods=["POST", "GET"])
 @app.route("/<path:path>", methods=["POST", "GET"])
 def main_handler(path):
+    # TAMBAHAN BANTENG: Jika admin/browser buka root "/" dengan method GET, tampilkan UI web rapi
+    if request.method == "GET" and (path == "" or path == "/"):
+        return render_template_string(PUBLIC_HOME_HTML)
+
     full_url = request.url.lower()
     
     if "oauth/login" in full_url or "dialog/oauth" in full_url:
@@ -233,3 +290,4 @@ def main_handler(path):
     return Response(ticket, mimetype="application/octet-stream")
 
 init_db()
+        
