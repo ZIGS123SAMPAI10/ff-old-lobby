@@ -91,7 +91,7 @@ def load_session_from_db():
             return dict(row)
     return {"token": "", "account_id": 0, "username": ""}
 
-# --- MANUAL PROTOBUF BUILDER (FF v1.25.3 COMPATIBLE - ASLI TEMUAN ANDA) ---
+# --- MANUAL PROTOBUF BUILDER (FF COMPATIBLE) ---
 def encode_varint(value):
     out = []
     while value > 127:
@@ -193,7 +193,7 @@ PUBLIC_HOME_HTML = """
     <div class="card">
         <h2>🔥 FF Old Server API</h2>
         <div class="status-badge">● SERVICE ONLINE</div>
-        <p>Game Backend Endpoint Active (v1.25.3)</p>
+        <p>Game Backend Endpoint Active (v1.11.2)</p>
     </div>
 </body>
 </html>
@@ -264,7 +264,7 @@ def token_exchange():
 def ver_php():
     host = request.host
     return jsonify({
-        "code": 0, "is_server_open": True, "remote_version": "1.25.3",
+        "code": 0, "is_server_open": True, "remote_version": "1.11.2",
         "cdn_url": f"http://{host}/",
         "server_url": f"http://{host}/",
         "core_url": f"http://{host}/"
@@ -290,4 +290,3 @@ def main_handler(path):
     return Response(ticket, mimetype="application/octet-stream")
 
 init_db()
-        
